@@ -83,4 +83,4 @@ with ui.row():
 
 table = ui.table(columns=columns, rows=[], row_key='name')
 
-ui.run()
+ui.run(host='0.0.0.0')

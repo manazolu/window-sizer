@@ -1,7 +1,13 @@
 # Importing the module 
 from nicegui import ui
 from nicegui.elements.label import Label
-        
+
+def delete_row(row_index):
+    table.remove_rows(table.rows[row_index])       
+
+def delete_all_rows():
+    table.rows.clear()
+    table.update()
 
 def calculate_new_width(width, ram):
     if ram == '18mm':
@@ -38,20 +44,16 @@ def calculate_net(width, ram):
         raise ValueError("Invalid ram value")
         
 def add_to_table(selected_width: int, selected_height: int, ram: str):
-    new_width = calculate_new_width(selected_width, ram)
     new_height = calculate_new_height(selected_height, ram)
-    wing = calculate_wing(new_height)
-    rope = calculate_rope(selected_width, selected_height)
-    net = calculate_net(selected_width, ram)
     table.add_row({
         'selected_width': selected_width, 
         'selected_height': selected_height, 
         'ram': ram, 
-        'calculated_width': new_width,
+        'calculated_width': calculate_new_width(selected_width, ram),
         'calculated_height': new_height,
-        'wing': wing,
-        'rope': rope,
-        'net': net
+        'wing': calculate_wing(new_height),
+        'rope': calculate_rope(selected_width, selected_height),
+        'net': calculate_net(selected_width, ram),
     })
 
 
@@ -82,5 +84,7 @@ with ui.row():
 
 
 table = ui.table(columns=columns, rows=[], row_key='name')
+with ui.row():
+    ui.button('Izbrisi sve', on_click=lambda: delete_all_rows())
 
 ui.run(host='0.0.0.0')

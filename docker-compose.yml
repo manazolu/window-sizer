@@ -1,5 +1,25 @@
+version: '3.8'
+
 services:
-  window:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nicegui
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
     build: .
     ports:
-      - "8081:8080"
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/nicegui
+
+volumes:
+  postgres_data:

@@ -1,7 +1,7 @@
 # Importing the module 
 from nicegui import ui
 from nicegui.elements.label import Label
-from weasyprint import HTML
+from weasyprint import HTML  # type: ignore
 from jinja2 import Environment, FileSystemLoader
 import datetime
 
@@ -54,18 +54,21 @@ def calculate_net(width, ram):
         raise ValueError("Invalid ram value")
         
 def add_to_table(selected_width: int, selected_height: int, ram: str, color: str):
-    new_height = calculate_new_height(selected_height, ram)
-    table.add_row({
-        'selected_width': selected_width, 
-        'selected_height': selected_height, 
-        'ram': ram,
-        'color': color,
-        'calculated_width': calculate_new_width(selected_width, ram),
-        'calculated_height': new_height,
-        'wing': calculate_wing(new_height, ram),
-        'rope': calculate_rope(selected_width, selected_height),
-        'net': calculate_net(selected_width, ram),
-    })
+    try:
+        new_height = calculate_new_height(selected_height, ram)
+        table.add_row({
+            'selected_width': selected_width,
+            'selected_height': selected_height,
+            'ram': ram,
+            'color': color,
+            'calculated_width': calculate_new_width(selected_width, ram),
+            'calculated_height': new_height,
+            'wing': calculate_wing(new_height, ram),
+            'rope': calculate_rope(selected_width, selected_height),
+            'net': calculate_net(selected_width, ram),
+        })
+    except ValueError as e:
+        ui.notify(f"Napaka: {str(e)}", color='red')
 
 def generate_pdf():
     env = Environment(loader=FileSystemLoader('templates'))
@@ -107,11 +110,11 @@ columns = [
 
 with ui.row():
     selected_width = ui.input(label='Sirina [mm]', placeholder='Unesi sirinu',
-        validation={'Unesi milimetre za sirinu': lambda value: int(value) > 0},
+        validation={'Unesi milimetre za sirinu': lambda value: value.isdigit() and int(value) > 0},
     )
 
     selected_height = ui.input(label='Visina [mm]', placeholder='Unesi visinu',
-        validation={'Unesi milimetre za sirinu': lambda value: int(value) > 0},
+        validation={'Unesi milimetre za visinu': lambda value: value.isdigit() and int(value) > 0},
     )
 
     selected_ram = ui.select(label='RAM', options=['18mm', '18mm-flis', '25mm', '26mm'], value='18mm')

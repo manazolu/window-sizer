@@ -9,3 +9,7 @@ Sync dependencies
 
 Run locally
 `uv run main.py`
+
+
+## Apt packages required for weaslyprint
+`libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info`

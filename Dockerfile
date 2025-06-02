@@ -1,7 +1,7 @@
 FROM python:3.13-slim-bookworm
 
 # The installer requires curl (and certificates) to download the release archive
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
 
 # Download the latest installer
 ADD https://astral.sh/uv/install.sh /uv-installer.sh

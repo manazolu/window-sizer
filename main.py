@@ -43,7 +43,7 @@ def calculate_wing(new_height, ram):
         return (int(new_height) - 7)
 
 def calculate_rope(width, height):
-    return((int(width) + int(height) * 2))
+    return((int(width) + int(height)) * 2)
 
 def calculate_net(width, ram):
     if ram == '18mm' or ram == '18mm-flis':

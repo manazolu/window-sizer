@@ -1,9 +1,10 @@
-# Importing the module 
+# Importing the module
 from nicegui import ui
 from nicegui.elements.label import Label
 from weasyprint import HTML  # type: ignore
 from jinja2 import Environment, FileSystemLoader
 import datetime
+import base64
 
 def delete_row(row_index):
     table.remove_rows(table.rows[row_index])       
@@ -57,6 +58,7 @@ def add_to_table(selected_width: int, selected_height: int, ram: str, color: str
     try:
         new_height = calculate_new_height(selected_height, ram)
         table.add_row({
+            'id': len(table.rows),  # Unique ID for the row
             'selected_width': selected_width,
             'selected_height': selected_height,
             'ram': ram,
@@ -82,7 +84,7 @@ def generate_pdf():
 
     return HTML(string=html_out).write_pdf()
 
-def generate_and_download_pdf():
+def generate_and_open_pdf():
     if not table.rows:
         ui.notify('Tabela je prazna, dodaj redove prije generiranja PDF-a.')
         return
@@ -100,8 +102,8 @@ columns = [
     {'name': 'selected_height', 'label': 'Visina', 'field': 'selected_height', 'required': True, 'align': 'left'},
     {'name': 'ram', 'label': 'RAM', 'field': 'ram', 'required': True, 'align': 'left'},
     {'name': 'color', 'label': 'Boja', 'field': 'color', 'required': True, 'align': 'left'},
-    {'name': 'calculated_width', 'label': 'Izracunana Sirina', 'field': 'calculated_width', 'required': True, 'align': 'left'},
-    {'name': 'calculated_height', 'label': 'Izracunana Visina', 'field': 'calculated_height', 'required': True, 'align': 'left'},
+    {'name': 'calculated_width', 'label': 'Izracun Sirina', 'field': 'calculated_width', 'required': True, 'align': 'left'},
+    {'name': 'calculated_height', 'label': 'Izracun Visina', 'field': 'calculated_height', 'required': True, 'align': 'left'},
     {'name': 'wing', 'label': 'Krilo', 'field': 'wing', 'required': True, 'align': 'left'},
     {'name': 'rope', 'label': 'Spaga', 'field': 'rope', 'required': True, 'align': 'left'},
     {'name': 'net', 'label': 'Mrezica', 'field': 'net', 'required': True, 'align': 'left'},
@@ -124,9 +126,10 @@ with ui.row():
     ui.button('Dodaj', on_click=lambda: add_to_table(selected_width.value, selected_height.value, selected_ram.value, selected_color.value))
 
 
-table = ui.table(columns=columns, rows=[], row_key='name')
+table = ui.table(columns=columns, rows=[], selection='multiple')
 with ui.row():
-    ui.button('Izbrisi sve', on_click=lambda: delete_all_rows(), color='red')
-    ui.button('Natisni PDF', on_click=lambda: generate_and_download_pdf())
+    ui.button('Izbrisi', on_click=lambda: table.remove_rows(table.selected), color='red') \
+        .bind_visibility_from(table, 'selected', backward=lambda val: bool(val))
+    ui.button('Natisni PDF', on_click=lambda: generate_and_open_pdf()) \
 
 ui.run(host='0.0.0.0', title='Prozori')

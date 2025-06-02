@@ -1015,7 +1015,7 @@ dependencies = [
 requires-dist = [
     { name = "jinja2" },
     { name = "nicegui", specifier = ">=2.17.0" },
-    { name = "weasyprint" },
+    { name = "weasyprint", specifier = ">=65.1" },
 ]
 
 [[package]]

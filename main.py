@@ -1,58 +1,19 @@
 # Importing the module
-from nicegui import ui
+from nicegui import ui, app
 from nicegui.elements.label import Label
 from weasyprint import HTML  # type: ignore
 from jinja2 import Environment, FileSystemLoader
 import datetime
-import base64
-
-def delete_row(row_index):
-    table.remove_rows(table.rows[row_index])       
-
-def delete_all_rows():
-    table.rows.clear()
-    table.update()
-
-def calculate_new_width(width, ram):
-    if ram == '18mm':
-        return (int(width) - 30)
-    elif ram == '25mm':
-        return (int(width) - 24)
-    elif ram == '26mm':
-        return (int(width) - 40)
-    elif ram == '18mm-flis':
-        return (int(width) - 62)
-    else:
-        raise ValueError("Invalid ram value")
-    
-def calculate_new_height(height, ram):
-    if ram == '18mm':
-        return (int(height) - 50)
-    elif ram == '25mm':
-        return (int(height) - 55)
-    elif ram == '26mm':
-        return (int(height) - 77)
-    elif ram == '18mm-flis':
-        return (int(height) - 62)
-    else:
-        raise ValueError("Invalid ram value")
-
-def calculate_wing(new_height, ram):
-    if ram == '18mm-flis':
-        return (int(new_height) - 11)
-    else:
-        return (int(new_height) - 7)
-
-def calculate_rope(width, height):
-    return((int(width) + int(height)) * 2)
-
-def calculate_net(width, ram):
-    if ram == '18mm' or ram == '18mm-flis':
-        return (int(width) / 2)
-    elif ram == '25mm' or ram == '26mm':
-        return (int(width) / 3)
-    else:
-        raise ValueError("Invalid ram value")
+import tempfile
+import os
+from calculations import (
+    calculate_new_width,
+    calculate_new_height,
+    calculate_wing,
+    calculate_rope,
+    calculate_net
+)
+from config import TABLE_COLUMNS, RAM_OPTIONS, COLOR_OPTIONS
         
 def add_to_table(selected_width: int, selected_height: int, ram: str, color: str):
     try:
@@ -77,7 +38,7 @@ def generate_pdf():
     template = env.get_template('pdf_template.html')
 
     html_out = template.render(
-        columns=columns,
+        columns=TABLE_COLUMNS,
         rows=table.rows,
         timestamp=datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     )
@@ -91,23 +52,20 @@ def generate_and_open_pdf():
     
     try:
         pdf_bytes = generate_pdf()
-        ui.download(pdf_bytes, 'izracun.pdf', 'application/pdf')
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            tmp_file.write(pdf_bytes)
+            tmp_path = tmp_file.name
+        
+        # Serve the file and open in new tab
+        pdf_url = f'/pdf/{os.path.basename(tmp_path)}'
+        app.add_static_file(local_file=tmp_path, url_path=pdf_url)
+        ui.run_javascript(f'window.open("{pdf_url}", "_blank");')
+        
     except Exception as e:
         ui.notify(f'Greška pri generiranju PDF-a: {str(e)}', color='red')
         return
-
-
-columns = [
-    {'name': 'selected_width', 'label': 'Sirina', 'field': 'selected_width', 'required': True, 'align': 'left'},
-    {'name': 'selected_height', 'label': 'Visina', 'field': 'selected_height', 'required': True, 'align': 'left'},
-    {'name': 'ram', 'label': 'RAM', 'field': 'ram', 'required': True, 'align': 'left'},
-    {'name': 'color', 'label': 'Boja', 'field': 'color', 'required': True, 'align': 'left'},
-    {'name': 'calculated_width', 'label': 'Izracun Sirina', 'field': 'calculated_width', 'required': True, 'align': 'left'},
-    {'name': 'calculated_height', 'label': 'Izracun Visina', 'field': 'calculated_height', 'required': True, 'align': 'left'},
-    {'name': 'wing', 'label': 'Krilo', 'field': 'wing', 'required': True, 'align': 'left'},
-    {'name': 'rope', 'label': 'Spaga', 'field': 'rope', 'required': True, 'align': 'left'},
-    {'name': 'net', 'label': 'Mrezica', 'field': 'net', 'required': True, 'align': 'left'},
-]
 
 
 with ui.row():
@@ -119,14 +77,14 @@ with ui.row():
         validation={'Unesi milimetre za visinu': lambda value: value.isdigit() and int(value) > 0},
     )
 
-    selected_ram = ui.select(label='RAM', options=['18mm', '18mm-flis', '25mm', '26mm'], value='18mm')
+    selected_ram = ui.select(label='RAM', options=RAM_OPTIONS, value='18mm')
 
-    selected_color = ui.select(label='Boja', options=['Bjela', 'Smedja', 'Antracit', 'Siva', 'Zlatni hrast'], value='Bjela')
+    selected_color = ui.select(label='Boja', options=COLOR_OPTIONS, value='Bjela')
 
     ui.button('Dodaj', on_click=lambda: add_to_table(selected_width.value, selected_height.value, selected_ram.value, selected_color.value))
 
 
-table = ui.table(columns=columns, rows=[], selection='multiple')
+table = ui.table(columns=TABLE_COLUMNS, rows=[], selection='multiple')
 with ui.row():
     ui.button('Izbrisi', on_click=lambda: table.remove_rows(table.selected), color='red') \
         .bind_visibility_from(table, 'selected', backward=lambda val: bool(val))

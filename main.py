@@ -13,22 +13,22 @@ from calculations import (
     calculate_rope,
     calculate_net
 )
-from config import TABLE_COLUMNS, RAM_OPTIONS, COLOR_OPTIONS
+from config import TABLE_COLUMNS, FRAME_OPTIONS, COLOR_OPTIONS
         
-def add_to_table(selected_width: int, selected_height: int, ram: str, color: str):
+def add_to_table(selected_width: int, selected_height: int, frame: str, color: str):
     try:
-        new_height = calculate_new_height(selected_height, ram)
+        new_height = calculate_new_height(selected_height, frame)
         table.add_row({
             'id': len(table.rows),  # Unique ID for the row
             'selected_width': selected_width,
             'selected_height': selected_height,
-            'ram': ram,
+            'frame': frame,
             'color': color,
-            'calculated_width': calculate_new_width(selected_width, ram),
+            'calculated_width': calculate_new_width(selected_width, frame),
             'calculated_height': new_height,
-            'wing': calculate_wing(new_height, ram),
+            'wing': calculate_wing(new_height, frame),
             'rope': calculate_rope(selected_width, selected_height),
-            'net': calculate_net(selected_width, ram),
+            'net': calculate_net(selected_width, frame),
         })
     except ValueError as e:
         ui.notify(f"Napaka: {str(e)}", color='red')
@@ -77,11 +77,11 @@ with ui.row():
         validation={'Unesi milimetre za visinu': lambda value: value.isdigit() and int(value) > 0},
     )
 
-    selected_ram = ui.select(label='RAM', options=RAM_OPTIONS, value='18mm')
+    selected_frame = ui.select(label='Ram', options=FRAME_OPTIONS, value='18mm')
 
     selected_color = ui.select(label='Boja', options=COLOR_OPTIONS, value='Bjela')
 
-    ui.button('Dodaj', on_click=lambda: add_to_table(selected_width.value, selected_height.value, selected_ram.value, selected_color.value))
+    ui.button('Dodaj', on_click=lambda: add_to_table(selected_width.value, selected_height.value, selected_frame.value, selected_color.value))
 
 
 table = ui.table(columns=TABLE_COLUMNS, rows=[], selection='multiple')

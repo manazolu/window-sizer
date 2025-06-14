@@ -14,6 +14,8 @@ from calculations import (
     calculate_net
 )
 from config import TABLE_COLUMNS, FRAME_OPTIONS, COLOR_OPTIONS
+
+customer_name= ''
         
 def add_to_table(selected_width: int, selected_height: int, frame: str, color: str):
     try:
@@ -40,6 +42,7 @@ def generate_pdf():
     html_out = template.render(
         columns=TABLE_COLUMNS,
         rows=table.rows,
+        customer_name=customer_name,
         timestamp=datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     )
 
@@ -66,6 +69,23 @@ def generate_and_open_pdf():
     except Exception as e:
         ui.notify(f'Greška pri generiranju PDF-a: {str(e)}', color='red')
         return
+    
+def generate_and_save_pdf():
+    if not table.rows:
+        ui.notify('Tabela je prazna, dodaj redove prije generiranja PDF-a.')
+        return
+    
+    try:
+        pdf_bytes = generate_pdf()
+        ui.download(pdf_bytes, 'izracun.pdf', 'application/pdf')
+
+    except Exception as e:
+        ui.notify(f'Greška pri generiranju PDF-a: {str(e)}', color='red')
+        return
+    
+def update_customer_name(value):
+    global customer_name
+    customer_name = value
 
 
 with ui.row():
@@ -88,6 +108,9 @@ table = ui.table(columns=TABLE_COLUMNS, rows=[], selection='multiple')
 with ui.row():
     ui.button('Izbrisi', on_click=lambda: table.remove_rows(table.selected), color='red') \
         .bind_visibility_from(table, 'selected', backward=lambda val: bool(val))
-    ui.button('Natisni PDF', on_click=lambda: generate_and_open_pdf()) \
+with ui.row():
+    ui.input(label='Unesite ime stranke', placeholder='', on_change=lambda e: update_customer_name(e.value))
+    with ui.dropdown_button('Print PDF', icon='print', split=True, on_click=lambda: generate_and_open_pdf()):
+        ui.button('Sacuvaj PDF', icon='save', on_click=lambda: generate_and_save_pdf()).classes('w-full')
 
 ui.run(host='0.0.0.0', title='Prozori')

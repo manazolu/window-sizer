@@ -9,3 +9,9 @@ dependencies = [
     "jinja2",
     "weasyprint>=65.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-cov>=6.2.1",
+]

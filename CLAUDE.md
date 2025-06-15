@@ -7,6 +7,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Development:**
 - `uv sync` - Install/sync dependencies
 - `uv run main.py` - Run the application locally (serves on 0.0.0.0)
+- `docker-compose up -d postgres` - Start PostgreSQL database (optional)
+
+**Database:**
+- PostgreSQL database for persistent storage (optional)
+- Database schema defined in `init.sql`
+- Architecture documented in `docs/DATABASE_ARCHITECTURE.md`
 
 **Dependencies:**
 - Uses `uv` for Python package management (requires Python >=3.13)
@@ -30,7 +36,7 @@ This is a single-file NiceGUI web application (`main.py`) that calculates window
 **Data Flow:**
 1. User inputs dimensions, selects frame type and color
 2. Calculations performed via dedicated functions
-3. Results added to in-memory table
+3. Results added to in-memory table (with optional database persistence)
 4. PDF generated from table data using HTML template
 5. PDF downloaded via browser
 

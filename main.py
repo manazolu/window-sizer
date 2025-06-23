@@ -21,7 +21,7 @@ customer_name= ''
 def add_to_table(selected_width: int, selected_height: int, frame: str, color: str):
     try:
         new_height = calculate_new_height(selected_height, frame)
-        calculated_width = calculate_new_width(selected_width, frame)
+        new_width = calculate_new_width(selected_width, frame)
         wing_size = calculate_wing(new_height, frame)
         rope_length = calculate_rope(selected_width, selected_height)
         net_size = calculate_net(selected_width, frame)
@@ -32,7 +32,7 @@ def add_to_table(selected_width: int, selected_height: int, frame: str, color: s
             'selected_height': selected_height,
             'frame_type': frame,
             'color': color,
-            'calculated_width': calculated_width,
+            'calculated_width': new_width,
             'calculated_height': new_height,
             'wing_size': wing_size,
             'rope_length': rope_length,
@@ -48,7 +48,7 @@ def add_to_table(selected_width: int, selected_height: int, frame: str, color: s
                 'selected_height': selected_height,
                 'frame': frame,
                 'color': color,
-                'calculated_width': calculated_width,
+                'calculated_width': new_width,
                 'calculated_height': new_height,
                 'wing': wing_size,
                 'rope': rope_length,

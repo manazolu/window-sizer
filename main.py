@@ -16,7 +16,8 @@ from calculations import (
 from config import TABLE_COLUMNS, FRAME_OPTIONS, COLOR_OPTIONS
 from services.database_service import DatabaseService
 
-customer_name= ''
+customer_name = ''
+database_available = False  # Track database connectivity
         
 def add_to_table(selected_width: int, selected_height: int, frame: str, color: str):
     try:
@@ -39,24 +40,38 @@ def add_to_table(selected_width: int, selected_height: int, frame: str, color: s
             'net_size': float(net_size),
         }
         
+        # Try to save to database first
+        row_id = len(table.rows)  # Fallback ID
+        db_saved = False
+        
         try:
             db_record = DatabaseService.create_calculation(calculation_data)
-            # Add to UI table with database ID
-            table.add_row({
-                'id': db_record.id,  # Use database ID
-                'selected_width': selected_width,
-                'selected_height': selected_height,
-                'frame': frame,
-                'color': color,
-                'calculated_width': new_width,
-                'calculated_height': new_height,
-                'wing': wing_size,
-                'rope': rope_length,
-                'net': net_size,
-            })
-            ui.notify("Uspješno dodano!", color='green')
+            row_id = db_record.id  # Use database ID
+            db_saved = True
+            global database_available
+            database_available = True
         except Exception as db_error:
-            ui.notify(f"Greška pri spremanju u bazu: {str(db_error)}", color='red')
+            ui.notify(f"Baza nedostupna, radim u memoriji: {str(db_error)}", color='orange')
+            database_available = False
+        
+        # Add to UI table (always works)
+        table.add_row({
+            'id': row_id,
+            'selected_width': selected_width,
+            'selected_height': selected_height,
+            'frame': frame,
+            'color': color,
+            'calculated_width': new_width,
+            'calculated_height': new_height,
+            'wing': wing_size,
+            'rope': rope_length,
+            'net': net_size,
+        })
+        
+        if db_saved:
+            ui.notify("Uspješno dodano u bazu!", color='green')
+        else:
+            ui.notify("Dodano u memoriju (baza nedostupna)", color='blue')
         
     except ValueError as e:
         ui.notify(f"Napaka: {str(e)}", color='red')
@@ -115,6 +130,7 @@ def update_customer_name(value):
 
 def load_calculations_from_database():
     """Load existing calculations from database into the UI table"""
+    global database_available
     try:
         calculations = DatabaseService.get_all_calculations()
         for calc in calculations:
@@ -132,32 +148,45 @@ def load_calculations_from_database():
             })
         if calculations:
             ui.notify(f"Učitano {len(calculations)} zapisa iz baze", color='blue')
+            database_available = True
+        else:
+            ui.notify("Baza prazna, počinje s novim izračunima", color='blue')
+            database_available = True
     except Exception as e:
-        ui.notify(f"Greška pri učitavanju iz baze: {str(e)}", color='orange')
+        ui.notify(f"Baza nedostupna, radim u memoriji", color='orange')
+        database_available = False
 
 def delete_selected_rows():
     """Delete selected rows from both UI table and database"""
     if not table.selected:
         return
     
-    try:
-        # Delete from database first
-        deleted_count = 0
-        for row in table.selected:
-            row_id = row['id']
-            if DatabaseService.delete_calculation(row_id):
-                deleted_count += 1
-        
-        # Remove from UI table
-        table.remove_rows(table.selected)
-        
-        if deleted_count > 0:
-            ui.notify(f"Obrisano {deleted_count} zapisa", color='green')
-        else:
-            ui.notify("Greška pri brisanju iz baze", color='red')
-            
-    except Exception as e:
-        ui.notify(f"Greška pri brisanju: {str(e)}", color='red')
+    global database_available
+    selected_count = len(table.selected)
+    
+    # Try to delete from database if available
+    db_deleted = 0
+    if database_available:
+        try:
+            for row in table.selected:
+                row_id = row['id']
+                if DatabaseService.delete_calculation(row_id):
+                    db_deleted += 1
+            database_available = True  # Connection working
+        except Exception as e:
+            ui.notify(f"Baza nedostupna, brišem samo iz memorije", color='orange')
+            database_available = False
+    
+    # Always remove from UI table
+    table.remove_rows(table.selected)
+    
+    # Notify user of results
+    if database_available and db_deleted > 0:
+        ui.notify(f"Obrisano {db_deleted} zapisa iz baze", color='green')
+    elif database_available and db_deleted == 0:
+        ui.notify("Greška pri brisanju iz baze", color='red')
+    else:
+        ui.notify(f"Obrisano {selected_count} zapisa iz memorije", color='blue')
 
 
 with ui.row():
